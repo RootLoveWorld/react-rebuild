@@ -38,6 +38,10 @@ class TemperatureDemo extends React.Component{
         this.setState({scale: 'f', temperature});
     }
 
+    handleClick=(e)=>{
+        console.log("e===",e);
+    }
+
     render(){
         const {scale,temperature} = this.state;
         //const scale = this.state.scale;
@@ -48,6 +52,7 @@ class TemperatureDemo extends React.Component{
         return (
             <div>
                 <span>Miracle Temperature Demo</span>
+                <button value="test" onClick={this.handleClick}/>
                 <TemperatureInput scale="c" temperature={celsius} onTemperatureChange={this.handleCelsiusChange} />
                 <TemperatureInput scale="f" temperature={fahrenheit} onTemperatureChange={this.handleFahrenheitChange} />
             </div>
