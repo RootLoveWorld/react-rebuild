@@ -1,14 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-
-import TemperatureInput from './components/TemperatureInput';
+import TemperatureDemo from './components/TemperatureDemo';
 
 ReactDOM.render(
-    (
-        <div>
-            <span>Miracle</span>
-            <TemperatureInput/>
-            <TemperatureInput/>
-        </div>
-    )
+    <TemperatureDemo/>
     ,document.getElementById("app"));
