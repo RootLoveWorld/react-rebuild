@@ -26,28 +26,30 @@ class TemperatureDemo extends React.Component{
             temperature:'',
             scale:'c'
         }
-        this.handleChange = this.handleChange.bind(this);
+        this.handleCelsiusChange = this.handleCelsiusChange.bind(this);
+        this.handleFahrenheitChange = this.handleFahrenheitChange.bind(this);
     }
 
-    handleChange(type){
-        this.setState({
-            scale:type,
-            temperature
-        });
+    handleCelsiusChange(temperature) {
+        this.setState({scale: 'c', temperature});
+      }
+    
+    handleFahrenheitChange(temperature) {
+        this.setState({scale: 'f', temperature});
     }
 
     render(){
-        //const {scale,temperature} = this.state;
-        const scale = this.state.scale;
-        const temperature = this.state.temperature;
+        const {scale,temperature} = this.state;
+        //const scale = this.state.scale;
+        //const temperature = this.state.temperature;
         const celsius = scale === 'f' ? tryConvert(temperature,toCelsius):temperature;
         const fahrenheit = scale === 'c' ? tryConvert(temperature,toFahrenheit):temperature;
-        console.log(this.state,scale,"---",temperature);
+
         return (
             <div>
                 <span>Miracle Temperature Demo</span>
-                <TemperatureInput scale="c" temperature={celsius} onTemperatureChange={this.handleChange("c")} />
-                <TemperatureInput scale="f" temperature={fahrenheit} onTemperatureChange={this.handleChange("f")} />
+                <TemperatureInput scale="c" temperature={celsius} onTemperatureChange={this.handleCelsiusChange} />
+                <TemperatureInput scale="f" temperature={fahrenheit} onTemperatureChange={this.handleFahrenheitChange} />
             </div>
         )
     }

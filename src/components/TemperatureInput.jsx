@@ -11,11 +11,9 @@ class TemperatureInput extends React.Component {
         this.handleChange = this.handleChange.bind(this);
     }
     handleChange(e){
-        console.log(this.props,e.target.value);
         this.props.onTemperatureChange(e.target.value);
     }
     render(){
-        console.log("@@==",this.props);
         const {temperature,scale} = this.props;
         return (
             <div>
