@@ -1,35 +1,60 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react';
+import './App.css';
+import { useWasm } from './hooks/useWasm';
+import PerformanceDemo from './components/PerformanceDemo';
+import { add } from './pkg/my_wasm_lib';
 
 function App() {
-  const [count, setCount] = useState(0)
+
+  const { wasm, loading, error } = useWasm();
+  console.log('App 组件渲染', wasm, loading, error);
+  console.log('wasm 模块', wasm);
+  if (loading) {
+    return (
+      <div className="App">
+        <header className="App-header">
+          <h1>React + WebAssembly 演示</h1>
+          <p>正在加载 WebAssembly 模块...</p>
+        </header>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="App">
+        <header className="App-header">
+          <h1>React + WebAssembly 演示</h1>
+          <p style={{ color: 'red' }}>错误: {error}</p>
+          <p>请确保已运行: <code>wasm-pack build --target web</code></p>
+        </header>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="App">
+      <header className="App-header">
+        <h1>React + WebAssembly 从零开始</h1>
+        <p>WebAssembly 模块已成功加载!</p>
+        
+        {wasm && (
+          <div style={{ textAlign: 'left', maxWidth: '800px', margin: '0 auto' }}>
+            {/* 基础功能演示 */}
+            <div style={{ padding: '20px', border: '1px solid #ccc', margin: '10px' }}>
+              <h3>基础功能测试</h3>
+              <p>1 + 2 = {wasm.add(BigInt(1000000), BigInt(2000000))}</p> 
+              <p>斐波那契(10) = {wasm.fibonacci(20)}</p> 
+            </div>
+
+            {/* 性能演示 */}
+            <PerformanceDemo wasm={wasm} />
+            
+          </div>
+        )}
+      </header>
+    </div>
+  );
 }
 
-export default App
+export default App;
