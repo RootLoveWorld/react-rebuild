@@ -1,12 +1,13 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { ImageProcessor as wasmImageProcessor } from '../pkg/my_wasm_lib';
 
 const ImageProcessingDemo = ({ wasm }) => {
-  const [originalImage, setOriginalImage] = useState(null);
+  const [originalImage, setOriginalImage] = useState<HTMLImageElement | null>(null); // 修改此处
   const [processedImage, setProcessedImage] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [processingTime, setProcessingTime] = useState(0);
-  const canvasRef = useRef(null);
-  const originalCanvasRef = useRef(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const originalCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleImageUpload = useCallback((event) => {
     const file = event.target.files[0];
@@ -15,13 +16,16 @@ const ImageProcessingDemo = ({ wasm }) => {
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-          setOriginalImage(img);
-          // 在canvas上绘制原图
+          setOriginalImage(img); // 现在类型匹配
           const canvas = originalCanvasRef.current;
-          const ctx = canvas.getContext('2d');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
+          if (canvas) {
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              canvas.width = img.width;
+              canvas.height = img.height;
+              ctx.drawImage(img, 0, 0);
+            }
+          }
         };
         img.src = e.target.result;
       };
@@ -37,17 +41,23 @@ const ImageProcessingDemo = ({ wasm }) => {
 
     try {
       const canvas = originalCanvasRef.current;
+      if (!canvas) {
+        throw new Error('原始画布不存在');
+      }
+      
       const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        throw new Error('无法获取原始画布上下文');
+      }
+      
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       
-      // 创建 ImageProcessor
-      const processor = new wasm.ImageProcessor(
+      const processor = new wasmImageProcessor(
         imageData.data,
         canvas.width,
         canvas.height
       );
 
-      // 执行处理操作
       switch (operation) {
         case 'grayscale':
           processor.grayscale();
@@ -62,12 +72,18 @@ const ImageProcessingDemo = ({ wasm }) => {
           break;
       }
 
-      // 获取处理后的数据
       const processedData = processor.get_data();
       
-      // 在canvas上显示结果
       const outputCanvas = canvasRef.current;
+      if (!outputCanvas) {
+        throw new Error('输出画布不存在');
+      }
+      
       const outputCtx = outputCanvas.getContext('2d');
+      if (!outputCtx) {
+        throw new Error('无法获取输出画布上下文');
+      }
+      
       outputCanvas.width = canvas.width;
       outputCanvas.height = canvas.height;
       
@@ -104,12 +120,18 @@ const ImageProcessingDemo = ({ wasm }) => {
         <div style={{ display: 'flex', gap: '20px', marginTop: '20px' }}>
           <div>
             <h4>原图</h4>
-            <canvas ref={originalCanvasRef} style={{ maxWidth: '400px', border: '1px solid #ddd' }} />
+            <canvas 
+              ref={originalCanvasRef} 
+              style={{ maxWidth: '400px', border: '1px solid #ddd' }} 
+            />
           </div>
           
           <div>
             <h4>处理后</h4>
-            <canvas ref={canvasRef} style={{ maxWidth: '400px', border: '1px solid #ddd' }} />
+            <canvas 
+              ref={canvasRef} 
+              style={{ maxWidth: '400px', border: '1px solid #ddd' }} 
+            />
           </div>
         </div>
       )}

@@ -16,15 +16,15 @@ const ParticleSystemDemo = ({ wasm }: { wasm: WasmModule }) => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (wasm && canvas) {
-      console.log('canvasRef.current', canvas, wasm);
-      console.log('wasm keys:', Object.keys(wasm));
+     // console.log('canvasRef.current', canvas, wasm);
+     // console.log('wasm keys:', Object.keys(wasm));
 
       try {
         const system = new wasmParticleSystem(canvas.width, canvas.height);
         setParticleSystem(system);
-        console.log('ParticleSystem created:', system);
-        console.log('particleSystem methods:', Object.keys(system));
-        console.log('particleSystem prototype methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(system)));
+       // console.log('ParticleSystem created:', system);
+       // console.log('particleSystem methods:', Object.keys(system));
+       // console.log('particleSystem prototype methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(system)));
       } catch (error) {
         console.error('Error creating ParticleSystem:', error);
       }

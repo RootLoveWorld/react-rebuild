@@ -13,8 +13,8 @@ import ErrorBoundary from './components/ErrorBoundary';
 function App() {
 
   const { wasm, loading, error } = useWasm();
-  console.log('App 组件渲染', wasm, loading, error);
-  console.log('wasm 模块', wasm);
+  //console.log('App 组件渲染', wasm, loading, error);
+  //console.log('wasm 模块', wasm);
   if (loading) {
     return (
       <div className="App">

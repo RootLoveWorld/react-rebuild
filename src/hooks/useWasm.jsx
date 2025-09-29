@@ -12,7 +12,7 @@ export const useWasm = () => {
         setLoading(true);
         // 动态导入 wasm 模块
         const wasmModule = await init().then((instance) => instance);
-        console.log('wasmModule', wasmModule);
+       // console.log('wasmModule', wasmModule);
         // 初始化 WebAssembly 实例
         setWasm(wasmModule);
         setError(null);
