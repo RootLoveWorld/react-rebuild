@@ -1,35 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
-
-const ParticleSystemDemo = ({ wasm, ParticleSystem }) => {
-  const [particleSystem, setParticleSystem] = useState(null);
+import { ParticleSystem as wasmParticleSystem } from '../pkg/my_wasm_lib' 
+const ParticleSystemDemo = ({ wasm }) => {
+  const [particleSystem, setParticleSystem] = useState<InstanceType<typeof wasmParticleSystem> | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [particleCount, setParticleCount] = useState(0);
-  const canvasRef = useRef(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationRef = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (wasm && canvas) {
       console.log('canvasRef.current', canvas, wasm);
-      
-      // 检查 wasm 对象及其方法
-      console.log('wasm object:', wasm);
-     // console.log('ParticleSystem available:', typeof wasm.ParticleSystem);
-     console.log('ParticleSystem', ParticleSystem);
+      console.log('wasm keys:', Object.keys(wasm));
 
-     try {
-       // Always use 'new' keyword with class constructors
-       const system = new ParticleSystem(canvas.width, canvas.height);
-       setParticleSystem(system);
-     } catch (error) {
-       console.error('Error creating ParticleSystem:', error);
-     }
+        const system = new wasmParticleSystem(canvas.width, canvas.height);
+        setParticleSystem(system);
+        console.log('ParticleSystem created:', system);
+        console.log('particleSystem methods:', Object.keys(system))
       
       // 检查是否是函数而不是构造函数
-/*       if (typeof wasm.ParticleSystem === 'function') {
+/*       if (typeof wasm.particlesystem_new === 'function') {
         try {
-          const system = new wasm.ParticleSystem(canvas.width, canvas.height);
+          const system = wasm.particlesystem_new(canvas.width, canvas.height);
           setParticleSystem(system);
+          console.log('ParticleSystem created:', system);
+          console.log('particleSystem methods:', Object.keys(system))
         } catch (error) {
           console.error('Error creating ParticleSystem:', error);
           
@@ -45,7 +40,6 @@ const ParticleSystemDemo = ({ wasm, ParticleSystem }) => {
         // 可能是已经实例化的对象
         setParticleSystem(wasm.ParticleSystem);
       } else {
-        console.log('ParticleSystem=',ParticleSystem)
         console.error('ParticleSystem not found in wasm module');
       } */
     }
@@ -59,12 +53,12 @@ const ParticleSystemDemo = ({ wasm, ParticleSystem }) => {
 
   const startSimulation = () => {
     if (!particleSystem || isRunning) return;
-    
+    console.log('Starting particle system');
     setIsRunning(true);
     
-    const animate = (timestamp) => {
+    const animate = (timestamp:number) => {
       if (!isRunning) return;
-      
+       console.log('Starting particle system animate',timestamp);
       // 随机添加新粒子
       if (Math.random() < 0.3) {
         const x = Math.random() * canvasRef.current.width;
@@ -72,12 +66,13 @@ const ParticleSystemDemo = ({ wasm, ParticleSystem }) => {
         const vy = -Math.random() * 200 - 100;
         const life = 2 + Math.random() * 3;
         
-        particleSystem.add_particle(x, canvasRef.current.height - 10, vx, vy, life);
+        particleSystem.addParticle(x, canvasRef.current.height - 10, vx, vy, life);
       }
-      
+
+
       // 更新粒子系统
       particleSystem.update(1/60);
-      setParticleCount(particleSystem.get_particle_count());
+      setParticleCount(particleSystem.getParticleCount());
       
       // 渲染粒子
       renderParticles();
@@ -105,7 +100,7 @@ const ParticleSystemDemo = ({ wasm, ParticleSystem }) => {
     
     if (!particleSystem) return;
     
-    const particles = particleSystem.get_particles();
+    const particles = particleSystem.getParticles();
     
     for (let i = 0; i < particles.length; i++) {
       const particle = particles[i];
@@ -149,7 +144,7 @@ const ParticleSystemDemo = ({ wasm, ParticleSystem }) => {
       const vx = Math.cos(angle) * speed;
       const vy = Math.sin(angle) * speed;
       
-      particleSystem.add_particle(centerX, centerY, vx, vy, 3);
+      particleSystem.addParticle(centerX, centerY, vx, vy, 3);
     }
   };
 

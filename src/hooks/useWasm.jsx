@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import init , { ParticleSystem as WasmParticleSystem } from '../pkg/my_wasm_lib'
+import init from '../pkg/my_wasm_lib'
 
 export const useWasm = () => {
   const [wasm, setWasm] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [particleSystem, setParticleSystem] = useState(null);
 
   useEffect(() => {
     const loadWasm = async () => {
@@ -14,8 +13,6 @@ export const useWasm = () => {
         // 动态导入 wasm 模块
         const wasmModule = await init().then((instance) => instance);
         console.log('wasmModule', wasmModule);
-        console.log('WasmParticleSystem', WasmParticleSystem);
-        setParticleSystem(WasmParticleSystem);
         // 初始化 WebAssembly 实例
         setWasm(wasmModule);
         setError(null);
@@ -30,5 +27,5 @@ export const useWasm = () => {
     loadWasm();
   }, []);
 
-  return { wasm, loading, error, particleSystem };
+  return { wasm, loading, error };
 };

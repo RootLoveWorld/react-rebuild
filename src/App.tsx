@@ -12,7 +12,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
 
-  const { wasm, loading, error ,particleSystem } = useWasm();
+  const { wasm, loading, error } = useWasm();
   console.log('App 组件渲染', wasm, loading, error);
   console.log('wasm 模块', wasm);
   if (loading) {
@@ -62,7 +62,7 @@ function App() {
             <MachineLearningDemo wasm={wasm} />
             {/* 物理系统 */}
             <ErrorBoundary fallback={<div style={{ color: 'red' }}>物理系统演示出错</div>}>
-              <ParticleSystemDemo wasm={wasm}  ParticleSystem={particleSystem} />
+              <ParticleSystemDemo wasm={wasm} />
             </ErrorBoundary>
           </div>
         )}
