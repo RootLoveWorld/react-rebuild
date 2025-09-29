@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ParticleSystem as wasmParticleSystem } from '../pkg/my_wasm_lib' 
-const ParticleSystemDemo = ({ wasm }) => {
+import { ParticleSystem as wasmParticleSystem } from '../pkg/my_wasm_lib';
+
+interface WasmModule {
+  // 根据实际的 wasm 模块结构定义类型
+  [key: string]: any;
+}
+
+const ParticleSystemDemo = ({ wasm }: { wasm: WasmModule }) => {
   const [particleSystem, setParticleSystem] = useState<InstanceType<typeof wasmParticleSystem> | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [particleCount, setParticleCount] = useState(0);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const animationRef = useRef(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -13,35 +19,15 @@ const ParticleSystemDemo = ({ wasm }) => {
       console.log('canvasRef.current', canvas, wasm);
       console.log('wasm keys:', Object.keys(wasm));
 
+      try {
         const system = new wasmParticleSystem(canvas.width, canvas.height);
         setParticleSystem(system);
         console.log('ParticleSystem created:', system);
-        console.log('particleSystem methods:', Object.keys(system))
-      
-      // 检查是否是函数而不是构造函数
-/*       if (typeof wasm.particlesystem_new === 'function') {
-        try {
-          const system = wasm.particlesystem_new(canvas.width, canvas.height);
-          setParticleSystem(system);
-          console.log('ParticleSystem created:', system);
-          console.log('particleSystem methods:', Object.keys(system))
-        } catch (error) {
-          console.error('Error creating ParticleSystem:', error);
-          
-          // 尝试作为普通函数调用
-          try {
-            const system = wasm.ParticleSystem(canvas.width, canvas.height);
-            setParticleSystem(system);
-          } catch (innerError) {
-            console.error('Error calling ParticleSystem as function:', innerError);
-          }
-        }
-      } else if (wasm.ParticleSystem) {
-        // 可能是已经实例化的对象
-        setParticleSystem(wasm.ParticleSystem);
-      } else {
-        console.error('ParticleSystem not found in wasm module');
-      } */
+        console.log('particleSystem methods:', Object.keys(system));
+        console.log('particleSystem prototype methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(system)));
+      } catch (error) {
+        console.error('Error creating ParticleSystem:', error);
+      }
     }
 
     return () => {
@@ -52,34 +38,40 @@ const ParticleSystemDemo = ({ wasm }) => {
   }, [wasm]);
 
   const startSimulation = () => {
-    if (!particleSystem || isRunning) return;
-    console.log('Starting particle system');
+    if (!particleSystem || isRunning || !canvasRef.current) return;
+    // console.log('Starting particle system'); // 生产环境下应删除或由环境开关控制
     setIsRunning(true);
-    
-    const animate = (timestamp:number) => {
-      if (!isRunning) return;
-       console.log('Starting particle system animate',timestamp);
+  
+    const animate = () => {
+      if ( !particleSystem || !canvasRef.current) return;
+  
       // 随机添加新粒子
       if (Math.random() < 0.3) {
-        const x = Math.random() * canvasRef.current.width;
+        const canvas = canvasRef.current;
+        const width = canvas.width;
+        const height = canvas.height;
+  
+        const x = Math.random() * width;
         const vx = (Math.random() - 0.5) * 200;
         const vy = -Math.random() * 200 - 100;
         const life = 2 + Math.random() * 3;
-        
-        particleSystem.addParticle(x, canvasRef.current.height - 10, vx, vy, life);
+  
+        particleSystem.addParticle(x, height - 10, vx, vy, life);
       }
-
-
+  
       // 更新粒子系统
-      particleSystem.update(1/60);
+      particleSystem.update(1 / 60);
       setParticleCount(particleSystem.getParticleCount());
-      
+  
       // 渲染粒子
       renderParticles();
-      
-      animationRef.current = requestAnimationFrame(animate);
+      if (isRunning) {
+        animationRef.current = requestAnimationFrame(animate);
+      } else {
+        animationRef.current = null;
+      }
     };
-    
+  
     animationRef.current = requestAnimationFrame(animate);
   };
 
@@ -87,18 +79,21 @@ const ParticleSystemDemo = ({ wasm }) => {
     setIsRunning(false);
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
     }
+    clearCanvas();
   };
 
   const renderParticles = () => {
     const canvas = canvasRef.current;
+    if (!canvas || !particleSystem) return;
+    
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     
     // 清除画布
     ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    if (!particleSystem) return;
     
     const particles = particleSystem.getParticles();
     
@@ -127,24 +122,34 @@ const ParticleSystemDemo = ({ wasm }) => {
 
   const clearCanvas = () => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
+    
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   };
 
   const explode = () => {
-    if (!particleSystem) return;
+    if (!particleSystem || !canvasRef.current) return;
+    
+    const PARTICLE_COUNT = 50;
+    const BASE_SPEED = 100;
+    const SPEED_RANGE = 150;
+    const PARTICLE_LIFETIME = 3;
+    const TWO_PI = 2 * Math.PI;
     
     const centerX = canvasRef.current.width / 2;
     const centerY = canvasRef.current.height / 2;
     
-    for (let i = 0; i < 50; i++) {
-      const angle = (i / 50) * 2 * Math.PI;
-      const speed = 100 + Math.random() * 150;
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const angle = (i / PARTICLE_COUNT) * TWO_PI;
+      const speed = BASE_SPEED + Math.random() * SPEED_RANGE;
       const vx = Math.cos(angle) * speed;
       const vy = Math.sin(angle) * speed;
       
-      particleSystem.addParticle(centerX, centerY, vx, vy, 3);
+      particleSystem.addParticle(centerX, centerY, vx, vy, PARTICLE_LIFETIME);
     }
   };
 
@@ -153,7 +158,7 @@ const ParticleSystemDemo = ({ wasm }) => {
       <h3>物理粒子系统</h3>
       
       <div style={{ marginBottom: '10px' }}>
-        <button onClick={startSimulation} disabled={isRunning}>
+        <button onClick={startSimulation} disabled={isRunning || !particleSystem}>
           启动粒子系统
         </button>
         <button onClick={stopSimulation} disabled={!isRunning}>
